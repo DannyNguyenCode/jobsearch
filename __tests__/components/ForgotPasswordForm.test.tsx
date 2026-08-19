@@ -33,6 +33,7 @@ describe("ForgotPasswordForm", () => {
     );
 
     expect(await screen.findByRole("heading", { name: "Enter your code" })).toBeTruthy();
+    expect(screen.getByText(/applicant@example.com/)).toBeTruthy();
     await user.type(screen.getByLabelText("6-digit code"), "123456");
     await user.type(screen.getByLabelText("New password"), "newpassword");
     await user.click(screen.getByRole("button", { name: "Reset password" }));

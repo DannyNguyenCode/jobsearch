@@ -83,7 +83,7 @@ export function ForgotPasswordForm() {
                 <Icon className="text-primary" name="mark_email_unread" size={48} />
                 <h1 className="text-3xl font-semibold mt-4">Enter your code</h1>
                 <p className="text-muted mt-1">
-                  If an account exists for {email}, we sent a 6-digit reset code.
+                  We sent a 6-digit reset code to <span className="font-medium text-base-content">{email}</span>.
                 </p>
               </div>
               <form className="flex flex-col gap-4" onSubmit={resetPassword}>

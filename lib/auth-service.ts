@@ -39,12 +39,12 @@ export async function assignVerificationCode(user: UserDocument) {
   await sendVerificationCodeEmail(user.email, issued.code);
 }
 
-export async function assignPasswordResetCode(user: UserDocument) {
+export async function assignPasswordResetCode(user: UserDocument, destinationEmail = user.email) {
   const issued = newEmailCode();
   user.resetCodeHash = issued.hash;
   user.resetCodeExpires = issued.expires;
   await user.save();
-  await sendPasswordResetCodeEmail(user.email, issued.code);
+  await sendPasswordResetCodeEmail(destinationEmail, issued.code);
 }
 
 export function isDuplicateKeyError(error: unknown, field?: string) {

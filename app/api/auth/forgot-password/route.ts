@@ -14,7 +14,7 @@ export async function POST(request: Request) {
 
   if (user) {
     try {
-      await assignPasswordResetCode(user);
+      await assignPasswordResetCode(user, parsed.data.email);
     } catch (error) {
       console.error("Failed to send password reset email", error);
       return jsonError("Could not send the reset email. Try again shortly.", 502);

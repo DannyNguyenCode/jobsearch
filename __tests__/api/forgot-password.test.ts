@@ -44,7 +44,7 @@ describe("POST /api/auth/forgot-password", () => {
 
     expect(status).toBe(200);
     expect(body.sent).toBe(true);
-    expect(assignReset).toHaveBeenCalledWith(user);
+    expect(assignReset).toHaveBeenCalledWith(user, "applicant@example.com");
   });
 
   it("returns success even when the email is unknown", async () => {
