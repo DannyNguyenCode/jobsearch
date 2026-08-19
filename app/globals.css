@@ -1,0 +1,113 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: kinetic --default;
+}
+
+@plugin "daisyui/theme" {
+  name: "kinetic";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+
+  --color-primary: #004ccd;
+  --color-primary-content: #ffffff;
+  --color-secondary: #006874;
+  --color-secondary-content: #ffffff;
+  --color-accent: #0f62fe;
+  --color-accent-content: #f3f3ff;
+  --color-neutral: #51585e;
+  --color-neutral-content: #ffffff;
+  --color-base-100: #ffffff;
+  --color-base-200: #f6f3f2;
+  --color-base-300: #e5e2e1;
+  --color-base-content: #1c1b1b;
+  --color-info: #3abff8;
+  --color-info-content: #00174c;
+  --color-success: #36d399;
+  --color-success-content: #003822;
+  --color-warning: #fbbd23;
+  --color-warning-content: #3b2d00;
+  --color-error: #ba1a1a;
+  --color-error-content: #ffffff;
+
+  --radius-selector: 0.5rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.75rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@theme inline {
+  --font-sans: var(--font-inter), "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-canvas: #fcf9f8;
+  --color-surface: #fcf9f8;
+  --color-surface-low: #f6f3f2;
+  --color-surface-high: #eae7e7;
+  --color-muted: #424656;
+  --color-outline: #737687;
+  --color-outline-variant: #c3c6d8;
+  --color-primary-fixed: #dbe1ff;
+  --color-primary-container: #0f62fe;
+  --color-interview: #0f62fe;
+  --color-screening: #006874;
+  --color-assessment: #fbbd23;
+  --color-applied: #3abff8;
+  --color-offer: #36d399;
+  --color-rejected: #f87272;
+  --color-planning: #d1d5db;
+  --shadow-card: 0 4px 12px rgba(15, 98, 254, 0.06);
+  --shadow-elevated: 0 12px 32px rgba(15, 98, 254, 0.1);
+}
+
+html {
+  color-scheme: light;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-base-content);
+  font-family: var(--font-sans);
+}
+
+a,
+button,
+label,
+summary,
+select,
+.btn,
+[role="button"],
+input[type="button"],
+input[type="submit"],
+input[type="reset"],
+input[type="checkbox"],
+input[type="radio"],
+input[type="file"] {
+  cursor: pointer;
+}
+
+a:disabled,
+button:disabled,
+.btn:disabled,
+input:disabled,
+select:disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.card-surface {
+  background: var(--color-base-100);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: var(--radius-box);
+  box-shadow: var(--shadow-card);
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-outline-variant) transparent;
+}
