@@ -26,6 +26,9 @@ describe("ApplicationForm", () => {
 
     render(<ApplicationForm cancelHref="/applicant/dashboard" />);
 
+    expect(screen.getByLabelText("Date")).toBeTruthy();
+    expect(screen.queryByLabelText("Date applied")).toBeNull();
+
     await user.type(screen.getByLabelText(/Position applied for/), "Frontend Engineer");
     await user.type(screen.getByLabelText(/Organization name/), "TechCorp");
     await user.click(screen.getAllByRole("button", { name: "Save application" })[0]);

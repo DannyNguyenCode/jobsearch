@@ -158,7 +158,7 @@ export const applications: JobApplication[] = [
     timeline: [
       {
         id: "t1",
-        title: "Interview Scheduled",
+        title: "Interview",
         description: "Technical round with hiring manager.",
         timestamp: "2 days ago",
         icon: "event",
@@ -209,7 +209,7 @@ export const applications: JobApplication[] = [
     timeline: [
       {
         id: "t3",
-        title: "Take Assessment",
+        title: "Assessment",
         description: "Portfolio exercise assigned.",
         timestamp: "5 days ago",
         icon: "assignment",

@@ -26,8 +26,8 @@ export default async function ArchivedApplicationsPage() {
           icon="inventory_2"
           title="No archived applications"
           action={
-            <Link className="btn btn-primary" href="/applicant/dashboard">
-              Back to dashboard
+            <Link className="btn btn-primary" href="/applicant/applications">
+              View applications
             </Link>
           }
         />
@@ -50,6 +50,11 @@ export default async function ArchivedApplicationsPage() {
               />
             ))}
           </div>
+          <p className="text-center">
+            <Link className="text-primary font-medium hover:underline" href="/applicant/applications">
+              View active applications
+            </Link>
+          </p>
         </>
       )}
     </div>

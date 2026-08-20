@@ -41,12 +41,14 @@ export type TimelineEvent = {
   timestamp: string;
   icon: string;
   tone?: "primary" | "secondary" | "neutral" | "success";
+  status?: ApplicationStatus;
   note?: ApplicationComment;
 };
 
 export type JobApplication = {
   id: string;
   dateApplied: string;
+  statusDate?: string;
   organization: string;
   location: string;
   phone: string;

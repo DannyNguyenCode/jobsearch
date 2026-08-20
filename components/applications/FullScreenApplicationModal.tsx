@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Avatar } from "@/components/ui/Avatar";
 import { Icon } from "@/components/ui/Icon";
 import { APPLICATION_SOURCE_LABELS } from "@/lib/application-source";
+import { STATUS_LABELS } from "@/lib/status";
 import type { Applicant, JobApplication } from "@/lib/types";
 import { ApplicationLifecycleActions } from "./ApplicationLifecycleActions";
 
@@ -40,7 +41,6 @@ export function FullScreenApplicationModal({
             <Icon name="close" />
           </button>
           <div className="min-w-0">
-            <p className="text-xs text-muted">Application ID: {application.id.toUpperCase()}</p>
             <h1 className="font-semibold truncate">{application.position}</h1>
           </div>
         </div>
@@ -73,27 +73,41 @@ export function FullScreenApplicationModal({
               {application.location || applicant.location}
             </p>
             <div className="flex gap-2 mt-4">
-              <a aria-label="Email" className="btn btn-outline btn-sm btn-square" href={`mailto:${applicant.email}`}>
-                <Icon name="mail" size={18} />
-              </a>
-              {application.postingUrl ? (
+              <span
+                className={mode === "recruiter" ? "tooltip tooltip-bottom" : undefined}
+                data-tip={mode === "recruiter" ? "Email Applicant" : undefined}
+              >
                 <a
-                  aria-label="Job posting"
+                  aria-label={mode === "recruiter" ? "Email Applicant" : "Email"}
                   className="btn btn-outline btn-sm btn-square"
-                  href={application.postingUrl}
-                  rel="noreferrer"
-                  target="_blank"
+                  href={`mailto:${applicant.email}`}
                 >
-                  <Icon name="link" size={18} />
+                  <Icon name="mail" size={18} />
                 </a>
+              </span>
+              {application.postingUrl ? (
+                <span
+                  className={mode === "recruiter" ? "tooltip tooltip-bottom" : undefined}
+                  data-tip={mode === "recruiter" ? "Open Job Posting" : undefined}
+                >
+                  <a
+                    aria-label={mode === "recruiter" ? "Open Job Posting" : "Job posting"}
+                    className="btn btn-outline btn-sm btn-square"
+                    href={application.postingUrl}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    <Icon name="link" size={18} />
+                  </a>
+                </span>
               ) : null}
             </div>
           </div>
           <div className="divider my-0" />
           <dl className="space-y-3 text-sm">
             <div className="flex justify-between gap-4">
-              <dt className="text-muted">Applied</dt>
-              <dd>{application.dateApplied}</dd>
+              <dt className="text-muted">{STATUS_LABELS[application.status]}</dt>
+              <dd>{application.statusDate ?? application.dateApplied}</dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-muted">Found on</dt>

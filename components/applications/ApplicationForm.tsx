@@ -46,7 +46,7 @@ export function ApplicationForm({ application, cancelHref }: ApplicationFormProp
         contactEmail: application.contactEmail,
         phone: application.phone,
         notes: application.notes,
-        dateApplied: application.dateApplied,
+        dateApplied: application.statusDate ?? application.dateApplied,
         status: application.status,
       }
     : { ...EMPTY };
@@ -320,16 +320,17 @@ export function ApplicationForm({ application, cancelHref }: ApplicationFormProp
               <Icon className="text-primary" name="flag" size={20} />
               Status
             </h2>
-            <label className="label" htmlFor="dateApplied">
-              <span className="label-text">Date applied</span>
+            <label className="label" htmlFor="statusDate">
+              <span className="label-text">Date</span>
             </label>
             <input
               className="input w-full"
-              id="dateApplied"
+              id="statusDate"
               type="date"
               value={values.dateApplied}
               onChange={(event) => update("dateApplied", event.target.value)}
             />
+            <p className="text-sm text-muted mt-1">Shown on the application journey with this status.</p>
             <label className="label mt-3" htmlFor="status">
               <span className="label-text">Status</span>
             </label>
@@ -337,7 +338,15 @@ export function ApplicationForm({ application, cancelHref }: ApplicationFormProp
               className="select w-full"
               id="status"
               value={values.status}
-              onChange={(event) => update("status", event.target.value as ApplicationStatus)}
+              onChange={(event) => {
+                const status = event.target.value as ApplicationStatus;
+                const initialDate = application?.statusDate ?? application?.dateApplied ?? todayInput();
+                setValues((current) => ({
+                  ...current,
+                  status,
+                  dateApplied: status === initial.status ? initialDate : todayInput(),
+                }));
+              }}
             >
               {STATUS_OPTIONS.map((status) => (
                 <option key={status} value={status}>

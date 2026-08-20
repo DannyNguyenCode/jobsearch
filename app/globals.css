@@ -111,3 +111,15 @@ select:disabled,
   scrollbar-width: thin;
   scrollbar-color: var(--color-outline-variant) transparent;
 }
+
+@media print {
+  @page {
+    size: landscape;
+    margin: 12mm;
+  }
+
+  html,
+  body {
+    background: white !important;
+  }
+}

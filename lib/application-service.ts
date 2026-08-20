@@ -4,7 +4,13 @@ import { User, type UserDocument } from "@/lib/models/User";
 import { initialsFromName, toApplicantView } from "@/lib/applicant-view";
 import { formatDisplayDate, formatDisplayDateTime, parseDateInput, toDateInput } from "@/lib/dates";
 import { isObjectId } from "@/lib/object-id";
-import { ARCHIVE_STATUSES, isArchivedStatus, nextActionFor, STATUS_LABELS } from "@/lib/status";
+import { ARCHIVE_STATUSES, isArchivedStatus, nextActionFor } from "@/lib/status";
+import {
+  isStatusTimelineEvent,
+  latestStatusEventDate,
+  recordStatusDate,
+  statusTimelineEvent,
+} from "@/lib/application-timeline";
 import type { ApplicationInput, ApplicationUpdate } from "@/lib/validators/application";
 import { DOCUMENT_KIND_LABELS, type DocumentUploadKind } from "@/lib/document-kind";
 import type {
@@ -16,6 +22,9 @@ import type {
   TimelineEvent,
   UserRole,
 } from "@/lib/types";
+import type { ManagedApplicantSummary } from "@/lib/managed-applicants";
+
+export type { ManagedApplicantSummary } from "@/lib/managed-applicants";
 
 export type Viewer = {
   id: string;
@@ -72,9 +81,14 @@ function serializeTimeline(application: ApplicationDocument): TimelineEvent[] {
       id: asId(event),
       title: event.title,
       description: event.description,
-      timestamp: event.timestamp ? formatDisplayDateTime(event.timestamp) : "",
+      timestamp: event.timestamp
+        ? isStatusTimelineEvent(event)
+          ? formatDisplayDate(event.timestamp)
+          : formatDisplayDateTime(event.timestamp)
+        : "",
       icon: event.icon,
       tone: (event.tone as TimelineTone | undefined) ?? "neutral",
+      status: event.status as ApplicationStatus | undefined,
     }));
 }
 
@@ -85,6 +99,9 @@ export function serializeApplication(
   return {
     id: String(application._id),
     dateApplied: toDateInput(application.dateApplied),
+    statusDate: toDateInput(
+      latestStatusEventDate(application.timeline ?? [], application.status, application.dateApplied),
+    ),
     organization: application.organization,
     location: application.location,
     phone: application.phone,
@@ -105,24 +122,58 @@ export function serializeApplication(
   };
 }
 
-function loggedEvent(input: ApplicationInput) {
-  return {
-    title: "Application logged",
-    description: `${input.position} at ${input.organization}`,
-    timestamp: new Date(),
-    icon: "description",
-    tone: "primary" as const,
-  };
+export async function createApplication(applicantId: string, input: ApplicationInput) {
+  await dbConnect();
+  const dateApplied = parseDateInput(input.dateApplied);
+  const created = await Application.create({
+    applicantId,
+    position: input.position,
+    organization: input.organization,
+    location: input.location,
+    postingUrl: input.postingUrl,
+    source: input.source,
+    contactName: input.contactName,
+    contactEmail: input.contactEmail,
+    phone: input.phone,
+    notes: input.notes,
+    dateApplied,
+    status: input.status,
+    documents: [],
+    comments: [],
+    timeline: [statusTimelineEvent(input.status, input.organization, dateApplied)],
+  });
+  return serializeApplication(created);
 }
 
-function statusEvent(status: ApplicationStatus, organization: string) {
-  return {
-    title: STATUS_LABELS[status],
-    description: `Status updated for ${organization}`,
-    timestamp: new Date(),
-    icon: status === "offer" ? "handshake" : status === "interview" ? "video_camera_front" : "flag",
-    tone: (status === "offer" ? "success" : status === "rejected" ? "neutral" : "secondary") as TimelineTone,
-  };
+export async function updateApplication(record: ApplicationDocument, input: ApplicationUpdate) {
+  const previousStatus = record.status;
+  if (input.position !== undefined) record.position = input.position;
+  if (input.organization !== undefined) record.organization = input.organization;
+  if (input.location !== undefined) record.location = input.location;
+  if (input.postingUrl !== undefined) record.postingUrl = input.postingUrl;
+  if (input.source !== undefined) record.source = input.source;
+  if (input.contactName !== undefined) record.contactName = input.contactName;
+  if (input.contactEmail !== undefined) record.contactEmail = input.contactEmail;
+  if (input.phone !== undefined) record.phone = input.phone;
+  if (input.notes !== undefined) record.notes = input.notes;
+  if (input.status !== undefined) record.status = input.status;
+
+  const nextStatus = record.status;
+  const statusChanged = Boolean(input.status && input.status !== previousStatus);
+  const dateProvided = input.dateApplied !== undefined;
+  if (dateProvided && nextStatus === "applied") {
+    record.dateApplied = parseDateInput(input.dateApplied);
+  }
+  if (statusChanged || dateProvided) {
+    recordStatusDate(record.timeline, {
+      previousStatus,
+      nextStatus,
+      date: dateProvided ? parseDateInput(input.dateApplied) : new Date(),
+      organization: record.organization,
+    });
+  }
+  await record.save();
+  return serializeApplication(record);
 }
 
 async function linkedApplicants(recruiterCode: string) {
@@ -136,6 +187,13 @@ export async function listApplicationsForApplicant(applicantId: string, view: "a
     view === "archive" ? { status: { $in: ARCHIVE_STATUSES } } : { status: { $nin: ARCHIVE_STATUSES } };
   const rows = await Application.find({ applicantId, ...statusFilter }).sort({ dateApplied: -1, createdAt: -1 });
   return rows.map((row) => serializeApplication(row));
+}
+
+export async function loadEmploymentCoachName(referenceCode: string) {
+  if (!referenceCode) return "";
+  await dbConnect();
+  const coach = await User.findOne({ role: "recruiter", referenceCode }).select("fullName");
+  return coach?.fullName ?? "";
 }
 
 export async function listApplicationsForRecruiter(recruiterCode: string, view: "active" | "archive" = "active") {
@@ -171,6 +229,102 @@ export async function listLinkedApplicants(recruiterCode: string): Promise<Appli
       location: latest?.location ?? "",
     });
   });
+}
+
+type ApplicantMetricRow = {
+  _id: unknown;
+  activeCount: number;
+  interviewCount: number;
+  offerCount: number;
+  lastActivityAt: Date | null;
+};
+
+type ApplicantJobFieldRow = {
+  _id: unknown;
+  jobField: string;
+};
+
+export async function listManagedApplicantSummaries(
+  recruiterCode: string,
+): Promise<ManagedApplicantSummary[]> {
+  await dbConnect();
+  const applicants = await linkedApplicants(recruiterCode);
+  if (applicants.length === 0) return [];
+
+  const applicantIds = applicants.map((applicant) => applicant._id);
+  const [metrics, jobFields] = await Promise.all([
+    Application.aggregate<ApplicantMetricRow>([
+      { $match: { applicantId: { $in: applicantIds } } },
+      {
+        $group: {
+          _id: "$applicantId",
+          activeCount: {
+            $sum: { $cond: [{ $in: ["$status", ARCHIVE_STATUSES] }, 0, 1] },
+          },
+          interviewCount: {
+            $sum: { $cond: [{ $eq: ["$status", "interview"] }, 1, 0] },
+          },
+          offerCount: {
+            $sum: { $cond: [{ $eq: ["$status", "offer"] }, 1, 0] },
+          },
+          lastActivityAt: { $max: { $ifNull: ["$updatedAt", "$dateApplied"] } },
+        },
+      },
+    ]),
+    Application.aggregate<ApplicantJobFieldRow>([
+      {
+        $match: {
+          applicantId: { $in: applicantIds },
+          status: { $nin: ARCHIVE_STATUSES },
+        },
+      },
+      { $sort: { dateApplied: -1, createdAt: -1 } },
+      { $group: { _id: "$applicantId", jobField: { $first: "$position" } } },
+    ]),
+  ]);
+
+  const metricsById = new Map(metrics.map((row) => [asId(row._id), row]));
+  const jobFieldById = new Map(jobFields.map((row) => [asId(row._id), row.jobField]));
+
+  return applicants.map((applicant) => {
+    const id = String(applicant._id);
+    const row = metricsById.get(id);
+    return {
+      id,
+      name: applicant.fullName,
+      email: applicant.email,
+      initials: initialsFromName(applicant.fullName),
+      jobField: jobFieldById.get(id) ?? "",
+      activeCount: row?.activeCount ?? 0,
+      interviewCount: row?.interviewCount ?? 0,
+      offerCount: row?.offerCount ?? 0,
+      lastActivityAt: row?.lastActivityAt ? row.lastActivityAt.toISOString() : null,
+    };
+  });
+}
+
+export async function loadLinkedApplicantForRecruiter(applicantId: string, recruiterCode: string) {
+  if (!isObjectId(applicantId) || !recruiterCode) return null;
+  await dbConnect();
+  const applicant = await User.findOne({
+    _id: applicantId,
+    role: "applicant",
+    referenceCode: recruiterCode,
+  });
+  if (!applicant) return null;
+  return toApplicantView(applicant);
+}
+
+export async function loadRecruiterApplicantWorkspace(applicantId: string, recruiterCode: string) {
+  const applicant = await loadLinkedApplicantForRecruiter(applicantId, recruiterCode);
+  if (!applicant) return null;
+
+  const [summaries, applications] = await Promise.all([
+    listManagedApplicantSummaries(recruiterCode),
+    listApplicationsForApplicant(applicantId, "active"),
+  ]);
+
+  return { applicant, summaries, applications };
 }
 
 export async function loadApplicationForViewer(applicationId: string, viewer: Viewer) {
@@ -241,49 +395,6 @@ export async function unlinkApplicantFromRecruiter(applicantId: string, recruite
     name: applicant.fullName,
     email: applicant.email,
   };
-}
-
-export async function createApplication(applicantId: string, input: ApplicationInput) {
-  await dbConnect();
-  const dateApplied = parseDateInput(input.dateApplied);
-  const created = await Application.create({
-    applicantId,
-    position: input.position,
-    organization: input.organization,
-    location: input.location,
-    postingUrl: input.postingUrl,
-    source: input.source,
-    contactName: input.contactName,
-    contactEmail: input.contactEmail,
-    phone: input.phone,
-    notes: input.notes,
-    dateApplied,
-    status: input.status,
-    documents: [],
-    comments: [],
-    timeline: [loggedEvent(input)],
-  });
-  return serializeApplication(created);
-}
-
-export async function updateApplication(record: ApplicationDocument, input: ApplicationUpdate) {
-  const previousStatus = record.status;
-  if (input.position !== undefined) record.position = input.position;
-  if (input.organization !== undefined) record.organization = input.organization;
-  if (input.location !== undefined) record.location = input.location;
-  if (input.postingUrl !== undefined) record.postingUrl = input.postingUrl;
-  if (input.source !== undefined) record.source = input.source;
-  if (input.contactName !== undefined) record.contactName = input.contactName;
-  if (input.contactEmail !== undefined) record.contactEmail = input.contactEmail;
-  if (input.phone !== undefined) record.phone = input.phone;
-  if (input.notes !== undefined) record.notes = input.notes;
-  if (input.dateApplied !== undefined) record.dateApplied = parseDateInput(input.dateApplied);
-  if (input.status !== undefined) record.status = input.status;
-  if (input.status && input.status !== previousStatus) {
-    record.timeline.push(statusEvent(input.status, record.organization));
-  }
-  await record.save();
-  return serializeApplication(record);
 }
 
 export async function addApplicationComment(

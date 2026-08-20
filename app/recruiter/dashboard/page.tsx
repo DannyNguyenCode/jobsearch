@@ -122,23 +122,16 @@ export default async function RecruiterDashboardPage() {
         </div>
 
         <div className="md:col-span-4 space-y-6">
-          <section className="card-surface p-6">
-            <h2 className="font-semibold mb-4">Quick actions</h2>
-            <div className="flex flex-col gap-2">
-              <button className="btn btn-outline justify-start" type="button">
-                <Icon className="text-primary" name="post_add" />
-                Create job requisition
+          <EmptyState
+            description="Messages about logged applications will show up here."
+            icon="chat"
+            title="No recent messages"
+            action={
+              <button className="btn btn-link text-primary" type="button">
+                Start a conversation
               </button>
-              <button className="btn btn-outline justify-start" type="button">
-                <Icon className="text-secondary" name="calendar_month" />
-                Schedule interviews
-              </button>
-              <Link className="btn btn-outline justify-start" href="/recruiter/applicants">
-                <Icon className="text-neutral" name="group_add" />
-                Add candidate manually
-              </Link>
-            </div>
-          </section>
+            }
+          />
 
           <section className="card-surface overflow-hidden">
             <div className="p-6 border-b border-outline-variant">
@@ -163,17 +156,6 @@ export default async function RecruiterDashboardPage() {
               )}
             </ol>
           </section>
-
-          <EmptyState
-            description="Messages about logged applications will show up here."
-            icon="chat"
-            title="No recent messages"
-            action={
-              <button className="btn btn-link text-primary" type="button">
-                Start a conversation
-              </button>
-            }
-          />
         </div>
       </div>
     </div>

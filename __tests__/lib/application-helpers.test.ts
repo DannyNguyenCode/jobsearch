@@ -1,11 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { nextActionFor } from "@/lib/status";
+import { nextActionFor, STATUS_LABELS, STATUS_OPTIONS } from "@/lib/status";
 import { initialsFromName } from "@/lib/applicant-view";
 import { parseDateInput, toDateInput } from "@/lib/dates";
 import { isObjectId } from "@/lib/object-id";
 import { canReadApplications, canWriteApplications } from "@/lib/application-access";
 
 describe("application helpers", () => {
+  it("exposes the selectable application statuses", () => {
+    expect(STATUS_OPTIONS).toEqual([
+      "planning",
+      "applied",
+      "screening",
+      "assessment",
+      "interview",
+      "offer",
+      "rejected",
+      "withdrawn",
+    ]);
+    expect(STATUS_LABELS.assessment).toBe("Assessment");
+    expect(STATUS_LABELS.interview).toBe("Interview");
+  });
+
   it("suggests a next action from status", () => {
     expect(nextActionFor("interview")).toBe("Prepare for interview");
     expect(nextActionFor("archived")).toBe("View archive");

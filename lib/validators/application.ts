@@ -38,7 +38,7 @@ export const applicationInputSchema = z.object({
   dateApplied: z
     .string()
     .trim()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter the date applied")
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter the date")
     .optional(),
   status: z.enum(applicationStatuses).optional().default("applied"),
 });
@@ -56,7 +56,7 @@ export const applicationUpdateSchema = z.object({
   dateApplied: z
     .string()
     .trim()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter the date applied")
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter the date")
     .optional(),
   status: z.enum(applicationStatuses).optional(),
 });

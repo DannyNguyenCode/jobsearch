@@ -14,7 +14,7 @@ type NavbarProps = {
 
 const APPLICANT_LINKS = [
   { href: "/applicant/dashboard", label: "Dashboard" },
-  { href: "/applicant/applications/new", label: "Add application" },
+  { href: "/applicant/applications", label: "Applications" },
   { href: "/applicant/archived", label: "Archived" },
   { href: "/applicant/profile", label: "Profile" },
 ];
