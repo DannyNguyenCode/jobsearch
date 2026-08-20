@@ -10,6 +10,8 @@ type ApplicationTableProps = {
   viewHref: (application: JobApplication) => string;
   showApplicant?: boolean;
   manageActions?: boolean;
+  dateHeader?: string;
+  getDate?: (application: JobApplication) => string;
 };
 
 export function ApplicationTable({
@@ -17,6 +19,8 @@ export function ApplicationTable({
   viewHref,
   showApplicant = false,
   manageActions = false,
+  dateHeader = "Date",
+  getDate = (application) => application.statusDate ?? application.dateApplied,
 }: ApplicationTableProps) {
   return (
     <div className="hidden md:block overflow-x-auto">
@@ -24,7 +28,7 @@ export function ApplicationTable({
         <thead>
           <tr className="text-muted text-xs uppercase tracking-wider">
             {showApplicant ? <th>Applicant</th> : null}
-            <th>Date applied</th>
+            <th>{dateHeader}</th>
             <th>Organization</th>
             <th>Position</th>
             <th>Source</th>
@@ -43,7 +47,7 @@ export function ApplicationTable({
                     <div className="text-xs text-muted">{application.applicantEmail}</div>
                   </td>
                 ) : null}
-                <td className="text-muted whitespace-nowrap">{application.dateApplied}</td>
+                <td className="text-muted whitespace-nowrap">{getDate(application)}</td>
                 <td>{application.organization}</td>
                 <td className="text-primary font-medium">{application.position}</td>
                 <td className="text-muted">{APPLICATION_SOURCE_LABELS[application.source]}</td>

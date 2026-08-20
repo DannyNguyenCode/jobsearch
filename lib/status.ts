@@ -4,8 +4,8 @@ export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   planning: "Planning",
   applied: "Applied",
   screening: "Screening",
-  assessment: "Take Assessment",
-  interview: "Interview Scheduled",
+  assessment: "Assessment",
+  interview: "Interview",
   offer: "Offer",
   rejected: "Rejected",
   archived: "Archived",
@@ -20,7 +20,7 @@ export const STATUS_OPTIONS: ApplicationStatus[] = [
   "interview",
   "offer",
   "rejected",
-  "archived",
+  "withdrawn",
 ];
 
 export const ARCHIVE_STATUSES: ApplicationStatus[] = ["archived", "rejected", "withdrawn"];

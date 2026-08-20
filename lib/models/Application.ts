@@ -33,6 +33,20 @@ const timelineEventSchema = new mongoose.Schema(
     timestamp: { type: Date, default: Date.now },
     icon: { type: String, default: "history" },
     tone: { type: String, enum: ["primary", "secondary", "neutral", "success"], default: "neutral" },
+    status: {
+      type: String,
+      enum: [
+        "planning",
+        "applied",
+        "screening",
+        "assessment",
+        "interview",
+        "offer",
+        "rejected",
+        "archived",
+        "withdrawn",
+      ],
+    },
   },
   { _id: true },
 );

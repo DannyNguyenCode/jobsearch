@@ -8,6 +8,7 @@ import { Icon } from "@/components/ui/Icon";
 
 const DOCK_LINKS = [
   { href: "/applicant/dashboard", label: "Dashboard", icon: "dashboard" },
+  { href: "/applicant/applications", label: "Applications", icon: "work" },
   { href: "/applicant/archived", label: "Archived", icon: "inventory_2" },
   { href: "/applicant/profile", label: "Profile", icon: "person" },
 ];

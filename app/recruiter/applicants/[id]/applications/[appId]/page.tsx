@@ -24,7 +24,7 @@ export default async function RecruiterApplicationWorkspacePage({
     <FullScreenApplicationModal
       applicant={loaded.applicant}
       application={loaded.application}
-      closeHref="/recruiter/applicants"
+      closeHref={`/recruiter/applicants/${id}`}
       mode="recruiter"
     />
   );

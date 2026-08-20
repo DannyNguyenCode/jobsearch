@@ -4,8 +4,10 @@ import { ApplicationCard } from "@/components/applications/ApplicationCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ACTION_REQUIRED_STATUSES } from "@/lib/applicant-application-views";
 import { listApplicationsForApplicant, recentUpdatesFrom } from "@/lib/application-service";
 import { requireRole } from "@/lib/require-role";
+import { STATUS_LABELS } from "@/lib/status";
 
 export const metadata: Metadata = { title: "Applicant dashboard" };
 
@@ -14,7 +16,7 @@ export default async function ApplicantDashboardPage() {
   const firstName = user.fullName?.split(" ")[0] ?? "there";
   const applications = await listApplicationsForApplicant(user.id);
   const interviews = applications.filter((item) => item.status === "interview").length;
-  const pending = applications.filter((item) => item.status === "offer" || item.status === "assessment").length;
+  const pending = applications.filter((item) => ACTION_REQUIRED_STATUSES.includes(item.status)).length;
   const updates = recentUpdatesFrom(applications);
 
   return (
@@ -42,7 +44,7 @@ export default async function ApplicantDashboardPage() {
             <p className="text-4xl font-bold text-primary">{interviews}</p>
             <p className="text-sm text-muted mt-1">Currently scheduled</p>
           </div>
-          <Link className="btn btn-outline btn-primary mt-4" href="#priority">
+          <Link className="btn btn-outline btn-primary mt-4" href="/applicant/applications?view=schedule">
             View schedule
           </Link>
         </article>
@@ -57,7 +59,7 @@ export default async function ApplicantDashboardPage() {
             <p className="text-4xl font-bold text-error">{pending}</p>
             <p className="text-sm text-muted mt-1">Offers and assessments awaiting review</p>
           </div>
-          <Link className="btn btn-primary mt-4" href="#priority">
+          <Link className="btn btn-primary mt-4" href="/applicant/applications?view=pending">
             Review now
           </Link>
         </article>
@@ -72,7 +74,7 @@ export default async function ApplicantDashboardPage() {
             <p className="text-4xl font-bold">{applications.length}</p>
             <p className="text-sm text-muted mt-1">Currently in progress</p>
           </div>
-          <Link className="btn btn-outline mt-4" href="#priority">
+          <Link className="btn btn-outline mt-4" href="/applicant/applications">
             View applications
           </Link>
         </article>
@@ -107,7 +109,8 @@ export default async function ApplicantDashboardPage() {
                       <div className="min-w-0">
                         <h3 className="font-semibold truncate">{application.position}</h3>
                         <p className="text-sm text-muted truncate">
-                          {application.organization} • Applied {application.dateApplied}
+                          {application.organization} • {STATUS_LABELS[application.status]}{" "}
+                          {application.statusDate ?? application.dateApplied}
                         </p>
                       </div>
                     </div>
@@ -153,8 +156,8 @@ export default async function ApplicantDashboardPage() {
               </ol>
             )}
           </div>
-          <Link className="block text-center text-primary font-medium mt-3 hover:underline" href="/applicant/archived">
-            View all history
+          <Link className="block text-center text-primary font-medium mt-3 hover:underline" href="/applicant/applications">
+            View all applications
           </Link>
         </div>
       </div>
