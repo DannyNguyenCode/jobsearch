@@ -7,6 +7,10 @@ export type ManagedApplicantSummary = {
   email: string;
   initials: string;
   jobField: string;
+  phone: string;
+  location: string;
+  openToRelocation: boolean;
+  remotePreferred: boolean;
   activeCount: number;
   interviewCount: number;
   offerCount: number;
@@ -44,7 +48,17 @@ export function filterManagedApplicants(applicants: ManagedApplicantSummary[], q
 }
 
 export function mergeSelectedApplicantSummary(
-  applicant: { id: string; name: string; email: string; initials: string; title: string },
+  applicant: {
+    id: string;
+    name: string;
+    email: string;
+    initials: string;
+    title: string;
+    phone?: string;
+    location?: string;
+    openToRelocation?: boolean;
+    remotePreferred?: boolean;
+  },
   summaries: ManagedApplicantSummary[],
   applications: JobApplication[],
 ): ManagedApplicantSummary {
@@ -55,6 +69,10 @@ export function mergeSelectedApplicantSummary(
       name: applicant.name,
       email: applicant.email,
       initials: applicant.initials,
+      phone: applicant.phone ?? existing.phone,
+      location: applicant.location ?? existing.location,
+      openToRelocation: applicant.openToRelocation ?? existing.openToRelocation,
+      remotePreferred: applicant.remotePreferred ?? existing.remotePreferred,
     };
   }
 
@@ -64,6 +82,10 @@ export function mergeSelectedApplicantSummary(
     email: applicant.email,
     initials: applicant.initials,
     jobField: applicant.title === "Applicant" ? "" : applicant.title,
+    phone: applicant.phone ?? "",
+    location: applicant.location ?? "",
+    openToRelocation: Boolean(applicant.openToRelocation),
+    remotePreferred: Boolean(applicant.remotePreferred),
     activeCount: applications.length,
     interviewCount: applications.filter((item) => item.status === "interview").length,
     offerCount: applications.filter((item) => item.status === "offer").length,

@@ -4,6 +4,7 @@ import {
   loginSchema,
   registerSchema,
   resetPasswordSchema,
+  applicantProfileSchema,
   verificationSchema,
 } from "@/lib/validators/auth";
 
@@ -99,5 +100,17 @@ describe("emailSchema", () => {
     const parsed = emailSchema.safeParse({ email: "Danny@Example.COM" });
     expect(parsed.success).toBe(true);
     if (parsed.success) expect(parsed.data.email).toBe("danny@example.com");
+  });
+});
+
+describe("applicantProfileSchema", () => {
+  it("accepts contact details and job preferences", () => {
+    const parsed = applicantProfileSchema.safeParse({
+      phone: "555-0100",
+      location: "Toronto, ON",
+      openToRelocation: true,
+      remotePreferred: false,
+    });
+    expect(parsed.success).toBe(true);
   });
 });

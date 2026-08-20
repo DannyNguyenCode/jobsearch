@@ -3,7 +3,7 @@ import { Application, type ApplicationDocument } from "@/lib/models/Application"
 import { User, type UserDocument } from "@/lib/models/User";
 import { initialsFromName, toApplicantView } from "@/lib/applicant-view";
 import { formatDisplayDate, formatDisplayDateTime, parseDateInput, toDateInput } from "@/lib/dates";
-import { isObjectId } from "@/lib/object-id";
+import { isObjectId, objectIdTime } from "@/lib/object-id";
 import { ARCHIVE_STATUSES, isArchivedStatus, nextActionFor } from "@/lib/status";
 import {
   isStatusTimelineEvent,
@@ -23,6 +23,17 @@ import type {
   UserRole,
 } from "@/lib/types";
 import type { ManagedApplicantSummary } from "@/lib/managed-applicants";
+import { createNotification, notifyLinkedRecruiter } from "@/lib/notification-service";
+import {
+  addedApplicationLine,
+  applicantApplicationHref,
+  applicationStatusLine,
+  commentAddedLine,
+  documentUploadedLine,
+  recruiterApplicationHref,
+  relationshipEndedLine,
+  updatedApplicationLine,
+} from "@/lib/notifications";
 
 export type { ManagedApplicantSummary } from "@/lib/managed-applicants";
 
@@ -142,11 +153,33 @@ export async function createApplication(applicantId: string, input: ApplicationI
     comments: [],
     timeline: [statusTimelineEvent(input.status, input.organization, dateApplied)],
   });
-  return serializeApplication(created);
+  const application = serializeApplication(created);
+  await notifyLinkedRecruiter(applicantId, {
+    kind: "application_added",
+    body: addedApplicationLine(),
+    href: recruiterApplicationHref(applicantId, application.id),
+    applicationId: application.id,
+  });
+  return application;
 }
 
 export async function updateApplication(record: ApplicationDocument, input: ApplicationUpdate) {
   const previousStatus = record.status;
+  const contentChanged = [
+    "position",
+    "organization",
+    "location",
+    "postingUrl",
+    "source",
+    "contactName",
+    "contactEmail",
+    "phone",
+    "notes",
+  ].some((field) => {
+    const key = field as keyof ApplicationUpdate;
+    return input[key] !== undefined && input[key] !== record[key as keyof ApplicationDocument];
+  });
+
   if (input.position !== undefined) record.position = input.position;
   if (input.organization !== undefined) record.organization = input.organization;
   if (input.location !== undefined) record.location = input.location;
@@ -173,7 +206,24 @@ export async function updateApplication(record: ApplicationDocument, input: Appl
     });
   }
   await record.save();
-  return serializeApplication(record);
+  const application = serializeApplication(record);
+  const applicantId = asId(record.applicantId);
+  if (statusChanged) {
+    await notifyLinkedRecruiter(applicantId, {
+      kind: "application_status",
+      body: applicationStatusLine(nextStatus),
+      href: recruiterApplicationHref(applicantId, application.id),
+      applicationId: application.id,
+    });
+  } else if (contentChanged) {
+    await notifyLinkedRecruiter(applicantId, {
+      kind: "application_updated",
+      body: updatedApplicationLine(),
+      href: recruiterApplicationHref(applicantId, application.id),
+      applicationId: application.id,
+    });
+  }
+  return application;
 }
 
 async function linkedApplicants(recruiterCode: string) {
@@ -226,7 +276,6 @@ export async function listLinkedApplicants(recruiterCode: string): Promise<Appli
     const latest = latestByApplicant.get(String(applicant._id));
     return toApplicantView(applicant, {
       title: latest?.position ?? "Applicant",
-      location: latest?.location ?? "",
     });
   });
 }
@@ -295,6 +344,10 @@ export async function listManagedApplicantSummaries(
       email: applicant.email,
       initials: initialsFromName(applicant.fullName),
       jobField: jobFieldById.get(id) ?? "",
+      phone: applicant.phone ?? "",
+      location: applicant.location ?? "",
+      openToRelocation: Boolean(applicant.openToRelocation),
+      remotePreferred: Boolean(applicant.remotePreferred),
       activeCount: row?.activeCount ?? 0,
       interviewCount: row?.interviewCount ?? 0,
       offerCount: row?.offerCount ?? 0,
@@ -345,7 +398,6 @@ export async function loadApplicationForViewer(applicationId: string, viewer: Vi
     application: serializeApplication(application, applicant),
     applicant: toApplicantView(applicant, {
       title: application.position,
-      location: application.location,
     }),
     record: application,
   };
@@ -373,7 +425,6 @@ export async function loadApplicantForRecruiter(applicantId: string, recruiterCo
   return {
     applicant: toApplicantView(applicant, {
       title: latest?.position ?? "Applicant",
-      location: latest?.location ?? "",
     }),
     applications: history.map((item) => serializeApplication(item, applicant)),
   };
@@ -388,8 +439,18 @@ export async function unlinkApplicantFromRecruiter(applicantId: string, recruite
     referenceCode: recruiterCode,
   });
   if (!applicant) return null;
+  const recruiter = await User.findOne({ role: "recruiter", referenceCode: recruiterCode }).select("fullName");
   applicant.referenceCode = "";
   await applicant.save();
+  if (recruiter) {
+    await createNotification({
+      recipientId: String(applicant._id),
+      actorName: recruiter.fullName,
+      kind: "relationship_ended",
+      body: relationshipEndedLine(),
+      href: "/applicant/profile",
+    });
+  }
   return {
     id: String(applicant._id),
     name: applicant.fullName,
@@ -418,7 +479,27 @@ export async function addApplicationComment(
     tone: "secondary",
   });
   await record.save();
-  return serializeApplication(record);
+  const application = serializeApplication(record);
+  const applicantId = asId(record.applicantId);
+  if (author.role === "recruiter") {
+    await createNotification({
+      recipientId: applicantId,
+      actorName: author.fullName,
+      kind: "application_comment",
+      body: commentAddedLine(),
+      href: applicantApplicationHref(application.id),
+      applicantId,
+      applicationId: application.id,
+    });
+  } else {
+    await notifyLinkedRecruiter(applicantId, {
+      kind: "application_comment",
+      body: commentAddedLine(),
+      href: recruiterApplicationHref(applicantId, application.id),
+      applicationId: application.id,
+    });
+  }
+  return application;
 }
 
 type CommentMutationResult =
@@ -508,7 +589,15 @@ export async function attachApplicationFile(
     tone: "primary",
   });
   await record.save();
-  return serializeApplication(record);
+  const application = serializeApplication(record);
+  const applicantId = asId(record.applicantId);
+  await notifyLinkedRecruiter(applicantId, {
+    kind: "application_document",
+    body: documentUploadedLine(input.kind),
+    href: recruiterApplicationHref(applicantId, application.id),
+    applicationId: application.id,
+  });
+  return application;
 }
 
 export async function removeApplicationFile(record: ApplicationDocument, documentId: string) {
@@ -538,5 +627,6 @@ export function recentUpdatesFrom(applications: JobApplication[], limit = 3) {
         applicationId: application.id,
       })),
     )
+    .sort((left, right) => objectIdTime(right.id) - objectIdTime(left.id))
     .slice(0, limit);
 }

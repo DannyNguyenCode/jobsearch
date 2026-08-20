@@ -42,3 +42,10 @@ export const linkRecruiterSchema = z.object({
     .trim()
     .regex(/^REC-[A-Z0-9]{6}$/i, "Enter a recruiter code like REC-7K4P2M"),
 });
+
+export const applicantProfileSchema = z.object({
+  phone: z.string().trim().max(40, "Enter a shorter phone number"),
+  location: z.string().trim().max(80, "Enter a shorter location"),
+  openToRelocation: z.boolean(),
+  remotePreferred: z.boolean(),
+});

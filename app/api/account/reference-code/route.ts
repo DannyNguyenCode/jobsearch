@@ -3,6 +3,8 @@ import { dbConnect } from "@/lib/db";
 import { User } from "@/lib/models/User";
 import { findRecruiterByReferenceCode } from "@/lib/auth-service";
 import { fieldErrors, jsonError, jsonOk, readJson } from "@/lib/api";
+import { createNotification } from "@/lib/notification-service";
+import { connectedProfileLine, recruiterApplicantHref } from "@/lib/notifications";
 import { linkRecruiterSchema } from "@/lib/validators/auth";
 
 export async function PATCH(request: Request) {
@@ -19,6 +21,17 @@ export async function PATCH(request: Request) {
   if (!recruiter) return jsonError("That recruiter code was not found.", 404);
 
   await User.updateOne({ _id: session.user.id }, { referenceCode: recruiter.referenceCode });
+
+  if (session.user.referenceCode !== recruiter.referenceCode) {
+    await createNotification({
+      recipientId: String(recruiter._id),
+      actorName: session.user.fullName || session.user.name || "Applicant",
+      kind: "applicant_connected",
+      body: connectedProfileLine(),
+      href: recruiterApplicantHref(session.user.id),
+      applicantId: session.user.id,
+    });
+  }
 
   return jsonOk({
     referenceCode: recruiter.referenceCode,
