@@ -1,6 +1,5 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { initialsFromName } from "@/lib/applicant-view";
@@ -122,17 +121,6 @@ export default async function RecruiterDashboardPage() {
         </div>
 
         <div className="md:col-span-4 space-y-6">
-          <EmptyState
-            description="Messages about logged applications will show up here."
-            icon="chat"
-            title="No recent messages"
-            action={
-              <button className="btn btn-link text-primary" type="button">
-                Start a conversation
-              </button>
-            }
-          />
-
           <section className="card-surface overflow-hidden">
             <div className="p-6 border-b border-outline-variant">
               <h2 className="font-semibold flex items-center gap-2">

@@ -92,8 +92,12 @@ export type Recruiter = {
   preferredName: string;
   email: string;
   phone: string;
+  phoneExt?: string;
   location: string;
   title: string;
+  organization: string;
+  organizationAddress: string;
+  organizationWebsite: string;
   initials: string;
   applicantsManaged: number;
 };

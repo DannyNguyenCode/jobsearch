@@ -63,6 +63,10 @@ export function relationshipEndedLine() {
   return "Ended the coaching relationship";
 }
 
+export function accountDeletedLine() {
+  return "Deleted their account";
+}
+
 export function recruiterApplicationHref(applicantId: string, applicationId: string) {
   return `/recruiter/applicants/${applicantId}/applications/${applicationId}`;
 }

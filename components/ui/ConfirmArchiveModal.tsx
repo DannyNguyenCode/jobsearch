@@ -7,6 +7,7 @@ type ConfirmArchiveModalProps = {
   open: boolean;
   title?: string;
   description?: string;
+  note?: string;
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm: () => void;
@@ -17,6 +18,7 @@ export function ConfirmArchiveModal({
   open,
   title = "Archive application?",
   description = "This application will move to your archive. You can restore or delete it later from Archived applications.",
+  note,
   confirmLabel = "Archive",
   cancelLabel = "Cancel",
   onConfirm,
@@ -38,6 +40,7 @@ export function ConfirmArchiveModal({
               {title}
             </h2>
             <p className="text-sm text-muted mt-2">{description}</p>
+            {note ? <p className="text-sm text-error mt-2">{note}</p> : null}
           </div>
         </div>
         <div className="modal-action">

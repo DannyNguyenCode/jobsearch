@@ -7,6 +7,7 @@ import {
   contactUpdatedLine,
   documentUploadedLine,
   relationshipEndedLine,
+  accountDeletedLine,
   updatedApplicationLine,
 } from "@/lib/notifications";
 
@@ -20,6 +21,7 @@ describe("notification copy", () => {
     expect(documentUploadedLine("jobPosting")).toBe("Job description uploaded");
     expect(documentUploadedLine("resume")).toBe("Resume uploaded");
     expect(relationshipEndedLine()).toBe("Ended the coaching relationship");
+    expect(accountDeletedLine()).toBe("Deleted their account");
   });
 
   it("describes profile edits in one line", () => {

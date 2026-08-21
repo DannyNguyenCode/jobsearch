@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { ProfileCard } from "@/components/profile/ProfileCard";
+import { DeleteAccountButton } from "@/components/profile/DeleteAccountButton";
 import { Icon } from "@/components/ui/Icon";
 
 export default function ApplicantProfilePage() {
@@ -20,6 +21,7 @@ export default function ApplicantProfilePage() {
   const invalid = recruiterId.trim() !== "" && !/^REC-[A-Z0-9]{6}$/i.test(recruiterId.trim());
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
+  const [preferredName, setPreferredName] = useState("");
   const [relocation, setRelocation] = useState(false);
   const [remote, setRemote] = useState(false);
   const [profileLoaded, setProfileLoaded] = useState(false);
@@ -39,6 +41,7 @@ export default function ApplicantProfilePage() {
         }
         const result = (await response.json()) as {
           profile?: {
+            preferredName?: string;
             phone?: string;
             location?: string;
             openToRelocation?: boolean;
@@ -47,6 +50,7 @@ export default function ApplicantProfilePage() {
         };
         if (cancelled) return;
         if (result.profile) {
+          setPreferredName(result.profile.preferredName ?? "");
           setPhone(result.profile.phone ?? "");
           setLocation(result.profile.location ?? "");
           setRelocation(Boolean(result.profile.openToRelocation));
@@ -67,6 +71,7 @@ export default function ApplicantProfilePage() {
   }, []);
 
   async function saveProfile(next?: {
+    preferredName?: string;
     phone?: string;
     location?: string;
     openToRelocation?: boolean;
@@ -76,6 +81,7 @@ export default function ApplicantProfilePage() {
     setProfileNotice("");
     setSavingProfile(true);
     const payload = {
+      preferredName: next?.preferredName ?? preferredName,
       phone: next?.phone ?? phone,
       location: next?.location ?? location,
       openToRelocation: next?.openToRelocation ?? relocation,
@@ -90,6 +96,7 @@ export default function ApplicantProfilePage() {
       const result = (await response.json()) as {
         error?: string;
         profile?: {
+          preferredName?: string;
           phone?: string;
           location?: string;
           openToRelocation?: boolean;
@@ -254,6 +261,17 @@ export default function ApplicantProfilePage() {
               <p>{fullName}</p>
             </div>
             <div>
+              <label className="label" htmlFor="profile-preferred-name">
+                <span className="label-text">Preferred name</span>
+              </label>
+              <input
+                className="input w-full"
+                id="profile-preferred-name"
+                value={preferredName}
+                onChange={(event) => setPreferredName(event.target.value)}
+              />
+            </div>
+            <div>
               <p className="text-xs font-semibold text-muted mb-1">Email address</p>
               <p>{email}</p>
             </div>
@@ -327,7 +345,8 @@ export default function ApplicantProfilePage() {
               </span>
               <Icon className="text-muted" name="chevron_right" />
             </button>
-          </div>
+              <DeleteAccountButton role="applicant" />
+            </div>
         </section>
       </div>
       </div>

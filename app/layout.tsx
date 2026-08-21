@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { AuthSessionProvider } from "@/components/providers/AuthSessionProvider";
+import { CookieConsent } from "@/components/layout/CookieConsent";
+import { THEME_BOOTSTRAP } from "@/lib/theme";
 import "./globals.css";
 
 const inter = Inter({
@@ -18,9 +20,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" data-theme="kinetic" className={`${inter.variable} h-full`}>
+    <html lang="en" data-theme="kinetic" suppressHydrationWarning className={`${inter.variable} h-full`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOTSTRAP }} />
+      </head>
       <body className="min-h-full flex flex-col font-sans antialiased">
         <AuthSessionProvider>{children}</AuthSessionProvider>
+        <CookieConsent />
       </body>
     </html>
   );

@@ -106,6 +106,7 @@ describe("emailSchema", () => {
 describe("applicantProfileSchema", () => {
   it("accepts contact details and job preferences", () => {
     const parsed = applicantProfileSchema.safeParse({
+      preferredName: "Danny",
       phone: "555-0100",
       location: "Toronto, ON",
       openToRelocation: true,

@@ -22,12 +22,16 @@ describe("Navbar", () => {
     );
   });
 
-  it("keeps notifications and drops search and settings", async () => {
+  it("shows notifications and settings", async () => {
     const user = userEvent.setup();
     render(<Navbar role="recruiter" userName="Alex Rivers" />);
 
     expect(screen.queryByRole("button", { name: "Search" })).toBeNull();
-    expect(screen.queryByRole("button", { name: "Settings" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Settings" })).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "Settings" }));
+    expect(screen.getByRole("menuitemradio", { name: "Light" })).toBeTruthy();
+    expect(screen.getByRole("menuitemradio", { name: "Dark" })).toBeTruthy();
 
     await user.click(screen.getByRole("button", { name: "Notifications" }));
     expect(screen.getByText("No notifications yet.")).toBeTruthy();

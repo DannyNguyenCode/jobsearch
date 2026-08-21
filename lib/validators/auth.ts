@@ -44,6 +44,7 @@ export const linkRecruiterSchema = z.object({
 });
 
 export const applicantProfileSchema = z.object({
+  preferredName: z.string().trim().max(40, "Enter a shorter preferred name"),
   phone: z.string().trim().max(40, "Enter a shorter phone number"),
   location: z.string().trim().max(80, "Enter a shorter location"),
   openToRelocation: z.boolean(),

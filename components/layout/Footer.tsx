@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CookieSettingsButton } from "@/components/layout/CookieConsent";
 
 export function Footer() {
   return (
@@ -16,9 +17,7 @@ export function Footer() {
           <Link className="hover:text-primary hover:underline" href="#">
             Support
           </Link>
-          <Link className="hover:text-primary hover:underline" href="#">
-            Cookie Settings
-          </Link>
+          <CookieSettingsButton className="hover:text-primary hover:underline cursor-pointer bg-transparent border-0 p-0 text-inherit font-inherit" />
         </nav>
       </div>
     </footer>

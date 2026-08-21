@@ -4,6 +4,7 @@ import type { UserRole } from "@/lib/types";
 const userSchema = new mongoose.Schema(
   {
     fullName: { type: String, required: true, trim: true },
+    preferredName: { type: String, trim: true, default: "" },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, select: false },
     role: { type: String, required: true, enum: ["applicant", "recruiter"] },
@@ -41,7 +42,7 @@ export type UserFields = InferSchemaType<typeof userSchema> & {
 
 export type UserDocument = HydratedDocument<UserFields>;
 
-const PROFILE_PATHS = ["phone", "location", "openToRelocation", "remotePreferred"] as const;
+const PROFILE_PATHS = ["preferredName", "phone", "location", "openToRelocation", "remotePreferred"] as const;
 
 function userModel() {
   const existing = mongoose.models.User as Model<UserFields> | undefined;

@@ -36,6 +36,7 @@ describe("GET /api/account/profile", () => {
     auth.mockResolvedValue({ user: applicant });
     userFindById.mockReturnValue({
       select: vi.fn().mockResolvedValue({
+        preferredName: "",
         phone: "555-0199",
         location: "Toronto, ON",
         openToRelocation: true,
@@ -47,6 +48,7 @@ describe("GET /api/account/profile", () => {
 
     expect(status).toBe(200);
     expect(body.profile).toEqual({
+      preferredName: "",
       phone: "555-0199",
       location: "Toronto, ON",
       openToRelocation: true,
@@ -70,6 +72,7 @@ describe("PATCH /api/account/profile", () => {
     auth.mockResolvedValue({ user: applicant });
     userFindById.mockReturnValue({
       select: vi.fn().mockResolvedValue({
+        preferredName: "",
         phone: "",
         location: "",
         openToRelocation: false,
@@ -77,6 +80,7 @@ describe("PATCH /api/account/profile", () => {
       }),
     });
     userFindByIdAndUpdate.mockResolvedValue({
+      preferredName: "Danny",
       phone: "555-0199",
       location: "Toronto, ON",
       openToRelocation: true,
@@ -86,6 +90,7 @@ describe("PATCH /api/account/profile", () => {
     const { status, body } = await readResponse(
       await PATCH(
         jsonRequest({
+          preferredName: "Danny",
           phone: "555-0199",
           location: "Toronto, ON",
           openToRelocation: true,
@@ -99,6 +104,7 @@ describe("PATCH /api/account/profile", () => {
       applicant.id,
       {
         $set: {
+          preferredName: "Danny",
           phone: "555-0199",
           location: "Toronto, ON",
           openToRelocation: true,
@@ -108,6 +114,7 @@ describe("PATCH /api/account/profile", () => {
       { new: true, runValidators: true },
     );
     expect(body.profile).toEqual({
+      preferredName: "Danny",
       phone: "555-0199",
       location: "Toronto, ON",
       openToRelocation: true,
@@ -124,6 +131,7 @@ describe("PATCH /api/account/profile", () => {
     auth.mockResolvedValue({ user: applicant });
     userFindById.mockReturnValue({
       select: vi.fn().mockResolvedValue({
+        preferredName: "Danny",
         phone: "555-0199",
         location: "Toronto, ON",
         openToRelocation: false,
@@ -131,6 +139,7 @@ describe("PATCH /api/account/profile", () => {
       }),
     });
     userFindByIdAndUpdate.mockResolvedValue({
+      preferredName: "Danny",
       phone: "555-0199",
       location: "Toronto, ON",
       openToRelocation: true,
@@ -140,6 +149,7 @@ describe("PATCH /api/account/profile", () => {
     const { status, body } = await readResponse(
       await PATCH(
         jsonRequest({
+          preferredName: "Danny",
           phone: "555-0199",
           location: "Toronto, ON",
           openToRelocation: true,
@@ -150,6 +160,7 @@ describe("PATCH /api/account/profile", () => {
 
     expect(status).toBe(200);
     expect(body.profile).toEqual({
+      preferredName: "Danny",
       phone: "555-0199",
       location: "Toronto, ON",
       openToRelocation: true,

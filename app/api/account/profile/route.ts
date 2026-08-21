@@ -7,12 +7,14 @@ import { contactUpdatedLine, recruiterApplicantHref } from "@/lib/notifications"
 import { applicantProfileSchema } from "@/lib/validators/auth";
 
 function profilePayload(user: {
+  preferredName?: string | null;
   phone?: string | null;
   location?: string | null;
   openToRelocation?: boolean | null;
   remotePreferred?: boolean | null;
 }) {
   return {
+    preferredName: user.preferredName ?? "",
     phone: user.phone ?? "",
     location: user.location ?? "",
     openToRelocation: Boolean(user.openToRelocation),
@@ -28,7 +30,7 @@ export async function GET() {
 
   await dbConnect();
   const user = await User.findById(session.user.id).select(
-    "phone location openToRelocation remotePreferred",
+    "preferredName phone location openToRelocation remotePreferred",
   );
   if (!user) return jsonError("Profile not found.", 404);
 
@@ -46,13 +48,15 @@ export async function PATCH(request: Request) {
 
   await dbConnect();
   const current = await User.findById(session.user.id).select(
-    "phone location openToRelocation remotePreferred",
+    "preferredName phone location openToRelocation remotePreferred",
   );
   if (!current) return jsonError("Profile not found.", 404);
 
   const previous = profilePayload(current);
   const contactChanged =
-    previous.phone !== parsed.data.phone || previous.location !== parsed.data.location;
+    previous.preferredName !== parsed.data.preferredName ||
+    previous.phone !== parsed.data.phone ||
+    previous.location !== parsed.data.location;
   const preferencesChanged =
     previous.openToRelocation !== parsed.data.openToRelocation ||
     previous.remotePreferred !== parsed.data.remotePreferred;
@@ -61,6 +65,7 @@ export async function PATCH(request: Request) {
     session.user.id,
     {
       $set: {
+        preferredName: parsed.data.preferredName,
         phone: parsed.data.phone,
         location: parsed.data.location,
         openToRelocation: parsed.data.openToRelocation,
