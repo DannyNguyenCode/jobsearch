@@ -1,9 +1,10 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { DeleteAccountButton } from "@/components/profile/DeleteAccountButton";
 import { Icon } from "@/components/ui/Icon";
 import { CopyButton } from "@/components/ui/CopyButton";
-import { ProfileCard, InfoRow } from "@/components/profile/ProfileCard";
+import { ProfileCard } from "@/components/profile/ProfileCard";
 import { currentRecruiter } from "@/lib/mock-data";
 
 export default function RecruiterProfilePage() {
@@ -13,19 +14,22 @@ export default function RecruiterProfilePage() {
   const referenceCode = session?.user?.referenceCode ?? currentRecruiter.recruiterCode;
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-4xl font-bold tracking-tight">Recruiter Central</h1>
-        <p className="text-lg text-muted mt-1">Manage your profile, metrics, and security settings.</p>
-      </div>
+    <div>
+      <header className="sticky top-16 z-30 bg-canvas/95 backdrop-blur -mx-4 md:-mx-8 px-4 md:px-8 py-4">
+        <div className="card-surface p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-semibold">Recruiter Central</h1>
+            <p className="text-sm text-muted mt-1">Manage your profile and security settings.</p>
+          </div>
+          <button className="btn btn-primary self-start sm:self-auto" type="button">
+            Save changes
+          </button>
+        </div>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
         <div className="lg:col-span-4 space-y-6">
-          <ProfileCard
-            action={<button className="btn btn-outline btn-primary w-full">Edit profile</button>}
-            name={fullName}
-            subtitle={currentRecruiter.title}
-          >
+          <ProfileCard name={fullName} subtitle={currentRecruiter.title}>
             <label className="label w-full mt-4">
               <span className="label-text uppercase tracking-wider">Recruiter ID</span>
             </label>
@@ -33,83 +37,44 @@ export default function RecruiterProfilePage() {
               <code className="text-sm font-medium">{referenceCode || "—"}</code>
               <CopyButton label="Copy recruiter ID" value={referenceCode} />
             </div>
-            <div className="mt-4 space-y-2 w-full text-left">
-              <InfoRow icon="mail">{email}</InfoRow>
-              <InfoRow icon="phone">{currentRecruiter.phone}</InfoRow>
-              <InfoRow icon="location_on">{currentRecruiter.location}</InfoRow>
-            </div>
           </ProfileCard>
           <section className="card-surface p-6">
-            <h2 className="font-semibold pb-2 mb-4 border-b border-outline-variant">Performance snapshot</h2>
-            <div className="flex items-center justify-between">
+            <h2 className="font-semibold flex items-center gap-2 pb-2 mb-4 border-b border-outline-variant">
+              <Icon name="corporate_fare" /> Organization
+            </h2>
+            <div className="space-y-4">
               <div>
-                <p className="text-xs uppercase tracking-wider text-muted">Applicants managed</p>
-                <p className="text-4xl font-bold text-primary">{currentRecruiter.applicantsManaged.toLocaleString()}</p>
-                <p className="text-sm text-secondary flex items-center gap-1 mt-1">
-                  <Icon name="trending_up" size={16} /> +12% this quarter
-                </p>
+                <p className="text-xs font-semibold text-muted mb-1">Organization name</p>
+                <p>{currentRecruiter.organization}</p>
               </div>
-              <div className="w-16 h-16 rounded-full border-4 border-primary-fixed border-t-primary flex items-center justify-center text-primary">
-                <Icon name="group" />
+              <div>
+                <p className="text-xs font-semibold text-muted mb-1">Address</p>
+                <p>{currentRecruiter.organizationAddress}</p>
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-muted mb-1">Website</p>
+                <a
+                  className="text-primary hover:underline break-all"
+                  href={currentRecruiter.organizationWebsite}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  {currentRecruiter.organizationWebsite.replace(/^https?:\/\//, "")}
+                </a>
+              </div>
+              <div>
+                <label className="label" htmlFor="roleTitle">
+                  <span className="label-text">Role title</span>
+                </label>
+                <input className="input w-full" disabled defaultValue={currentRecruiter.title} id="roleTitle" />
+                <p className="text-sm text-muted mt-1">Role titles are managed by HR Administration.</p>
               </div>
             </div>
           </section>
         </div>
         <div className="lg:col-span-8 space-y-6">
           <section className="card-surface p-6">
-            <h2 className="text-xl font-semibold pb-3 mb-6 border-b border-outline-variant">Account security</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <h3 className="font-semibold flex items-center gap-2 mb-2">
-                  <Icon name="password" /> Password management
-                </h3>
-                <p className="text-sm text-muted mb-4">Update your password regularly to maintain security.</p>
-                <label className="label" htmlFor="current-password">
-                  <span className="label-text">Current password</span>
-                </label>
-                <input className="input w-full" disabled id="current-password" type="password" value="********" />
-                <p className="text-sm text-muted mt-2">Last changed: 45 days ago</p>
-                <button className="btn btn-primary mt-3" type="button">
-                  Change password
-                </button>
-              </div>
-              <div>
-                <h3 className="font-semibold flex items-center gap-2 mb-2">
-                  <Icon name="devices" /> Active sessions
-                </h3>
-                <p className="text-sm text-muted mb-4">Review devices logged into your account.</p>
-                <div className="space-y-2">
-                  <div className="bg-base-200 border border-outline-variant rounded-md p-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Icon className="text-primary" name="computer" />
-                      <div>
-                        <p className="font-medium">MacBook Pro · Safari</p>
-                        <p className="text-sm text-muted">Chicago, IL • Active now</p>
-                      </div>
-                    </div>
-                    <span className="badge badge-secondary">Current</span>
-                  </div>
-                  <div className="bg-base-200 border border-outline-variant rounded-md p-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Icon name="smartphone" />
-                      <div>
-                        <p className="font-medium">iPhone 14 · App</p>
-                        <p className="text-sm text-muted">Chicago, IL • 2 hours ago</p>
-                      </div>
-                    </div>
-                    <button aria-label="Sign out iPhone session" className="btn btn-ghost btn-sm btn-circle" type="button">
-                      <Icon name="logout" size={18} />
-                    </button>
-                  </div>
-                </div>
-                <button className="btn btn-link text-primary mt-2" type="button">
-                  Sign out of all other devices
-                </button>
-              </div>
-            </div>
-          </section>
-          <section className="card-surface p-6">
-            <h2 className="text-xl font-semibold pb-3 mb-6 border-b border-outline-variant">Personal information</h2>
+            <h2 className="font-semibold border-b border-outline-variant pb-3 mb-4">Personal information</h2>
             <form className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="label" htmlFor="fullName">
@@ -127,22 +92,62 @@ export default function RecruiterProfilePage() {
                   id="preferredName"
                 />
               </div>
-              <div className="md:col-span-2">
-                <label className="label" htmlFor="roleTitle">
-                  <span className="label-text">Role title</span>
-                </label>
-                <input className="input w-full" disabled defaultValue={currentRecruiter.title} id="roleTitle" />
-                <p className="text-sm text-muted mt-1">Role titles are managed by HR Administration.</p>
-              </div>
-              <div className="md:col-span-2 flex justify-end gap-2 mt-2">
-                <button className="btn btn-outline" type="button">
-                  Cancel
-                </button>
-                <button className="btn btn-primary" type="submit">
-                  Save changes
-                </button>
-              </div>
             </form>
+          </section>
+          <section className="card-surface p-6">
+            <h2 className="font-semibold border-b border-outline-variant pb-3 mb-4">Contact information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs font-semibold text-muted mb-1">Email address</p>
+                <p>{email}</p>
+              </div>
+              <div>
+                <div className="flex gap-2">
+                  <div className="min-w-0 flex-1">
+                    <label className="label" htmlFor="contact-phone">
+                      <span className="label-text">Phone number</span>
+                    </label>
+                    <input className="input w-full" defaultValue={currentRecruiter.phone} id="contact-phone" />
+                  </div>
+                  {currentRecruiter.phoneExt ? (
+                    <div className="w-24 shrink-0">
+                      <label className="label" htmlFor="contact-phone-ext">
+                        <span className="label-text">Ext</span>
+                      </label>
+                      <input
+                        className="input w-full"
+                        defaultValue={currentRecruiter.phoneExt}
+                        id="contact-phone-ext"
+                      />
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+              <div className="md:col-span-2">
+                <label className="label" htmlFor="contact-location">
+                  <span className="label-text">Location</span>
+                </label>
+                <input className="input w-full" defaultValue={currentRecruiter.location} id="contact-location" />
+              </div>
+            </div>
+          </section>
+          <section className="card-surface p-6">
+            <h2 className="font-semibold text-error border-b border-outline-variant pb-3 mb-4">
+              Security & account
+            </h2>
+            <div className="space-y-3">
+              <button className="w-full flex items-center justify-between p-4 bg-base-200 rounded-lg text-left" type="button">
+                <span className="flex items-center gap-3">
+                  <Icon name="lock" />
+                  <span>
+                    <span className="block font-medium">Change password</span>
+                    <span className="text-sm text-muted">Update your account password regularly.</span>
+                  </span>
+                </span>
+                <Icon className="text-muted" name="chevron_right" />
+              </button>
+              <DeleteAccountButton role="recruiter" />
+            </div>
           </section>
         </div>
       </div>

@@ -3,7 +3,7 @@ import { Icon } from "@/components/ui/Icon";
 
 type ProfileCardProps = {
   name: string;
-  subtitle: string;
+  subtitle?: string;
   initials?: string;
   action?: React.ReactNode;
   children?: React.ReactNode;
@@ -13,8 +13,8 @@ export function ProfileCard({ name, subtitle, initials, action, children }: Prof
   return (
     <section className="card-surface p-6 flex flex-col items-center text-center">
       <Avatar initials={initials} name={name} size="xl" />
-      <h1 className="mt-4 text-xl font-semibold">{name}</h1>
-      <p className="text-sm text-muted mb-4">{subtitle}</p>
+      <h2 className="mt-4 text-xl font-semibold">{name}</h2>
+      {subtitle ? <p className="text-sm text-muted mt-1 mb-4">{subtitle}</p> : null}
       {action}
       {children}
     </section>

@@ -4,10 +4,15 @@ import type { UserRole } from "@/lib/types";
 const userSchema = new mongoose.Schema(
   {
     fullName: { type: String, required: true, trim: true },
+    preferredName: { type: String, trim: true, default: "" },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     password: { type: String, required: true, select: false },
     role: { type: String, required: true, enum: ["applicant", "recruiter"] },
     referenceCode: { type: String, trim: true, uppercase: true, default: "" },
+    phone: { type: String, trim: true, default: "" },
+    location: { type: String, trim: true, default: "" },
+    openToRelocation: { type: Boolean, default: false },
+    remotePreferred: { type: Boolean, default: false },
     emailVerified: { type: Date, default: null },
     verificationCodeHash: { type: String, select: false, default: null },
     verificationCodeExpires: { type: Date, select: false, default: null },
@@ -37,5 +42,14 @@ export type UserFields = InferSchemaType<typeof userSchema> & {
 
 export type UserDocument = HydratedDocument<UserFields>;
 
-export const User: Model<UserFields> =
-  mongoose.models.User ?? mongoose.model<UserFields>("User", userSchema);
+const PROFILE_PATHS = ["preferredName", "phone", "location", "openToRelocation", "remotePreferred"] as const;
+
+function userModel() {
+  const existing = mongoose.models.User as Model<UserFields> | undefined;
+  if (existing && PROFILE_PATHS.some((path) => !existing.schema.path(path))) {
+    mongoose.deleteModel("User");
+  }
+  return (mongoose.models.User as Model<UserFields> | undefined) ?? mongoose.model<UserFields>("User", userSchema);
+}
+
+export const User: Model<UserFields> = userModel();

@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { Avatar } from "@/components/ui/Avatar";
 import { Icon } from "@/components/ui/Icon";
 import { LogoutButton } from "@/components/auth/LogoutButton";
+import { NotificationsMenu } from "@/components/layout/NotificationsMenu";
+import { SettingsMenu } from "@/components/layout/SettingsMenu";
 import type { UserRole } from "@/lib/types";
 
 type NavbarProps = {
@@ -64,15 +66,8 @@ export function Navbar({ role, userName }: NavbarProps) {
       </div>
       {role !== "guest" ? (
         <div className="flex items-center gap-1">
-          <button aria-label="Search" className="btn btn-ghost btn-circle" type="button">
-            <Icon name="search" />
-          </button>
-          <button aria-label="Notifications" className="btn btn-ghost btn-circle" type="button">
-            <Icon name="notifications" />
-          </button>
-          <button aria-label="Settings" className="btn btn-ghost btn-circle" type="button">
-            <Icon name="settings" />
-          </button>
+          <NotificationsMenu />
+          <SettingsMenu />
           <Link aria-label={`${userName ?? "User"} profile`} className="ml-1" href={profileHref}>
             <Avatar name={userName ?? "User"} size="sm" />
           </Link>

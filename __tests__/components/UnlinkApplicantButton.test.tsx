@@ -17,7 +17,7 @@ describe("UnlinkApplicantButton", () => {
     vi.stubGlobal("fetch", vi.fn());
   });
 
-  it("asks the recruiter to confirm before ending the relationship", async () => {
+  it("asks the recruiter to confirm before removing the applicant", async () => {
     const user = userEvent.setup();
     vi.mocked(fetch).mockResolvedValue({
       ok: true,
@@ -25,8 +25,8 @@ describe("UnlinkApplicantButton", () => {
     } as Response);
 
     render(<UnlinkApplicantButton applicantId="aaaaaaaaaaaaaaaaaaaaaaaa" applicantName="Danny Nguyen" />);
-    await user.click(screen.getByRole("button", { name: /end relationship/i }));
-    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Remove connection" }));
+    await user.click(screen.getByRole("button", { name: /remove applicant/i }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Remove Applicant" }));
 
     expect(fetch).toHaveBeenCalledWith(
       "/api/applicants/aaaaaaaaaaaaaaaaaaaaaaaa/link",

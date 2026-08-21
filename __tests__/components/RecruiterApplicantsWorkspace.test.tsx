@@ -16,6 +16,10 @@ const danny: ManagedApplicantSummary = {
   email: "giabnguyen1@gmail.com",
   initials: "DN",
   jobField: "Web Developer",
+  phone: "555-0199",
+  location: "Toronto, ON",
+  openToRelocation: true,
+  remotePreferred: false,
   activeCount: 2,
   interviewCount: 1,
   offerCount: 0,
@@ -28,6 +32,10 @@ const jane: ManagedApplicantSummary = {
   email: "jane@example.com",
   initials: "JS",
   jobField: "Customer Service",
+  phone: "",
+  location: "",
+  openToRelocation: false,
+  remotePreferred: true,
   activeCount: 1,
   interviewCount: 0,
   offerCount: 0,
@@ -83,6 +91,20 @@ describe("RecruiterApplicantsWorkspace", () => {
     expect(screen.getByRole("navigation", { name: "Managed applicants" })).toBeTruthy();
     expect(screen.getByRole("link", { name: /Danny Nguyen/ })).toBeTruthy();
     expect(screen.getByRole("link", { name: /Jane Smith/ })).toBeTruthy();
+  });
+
+  it("shows the selected applicant profile contact details and job preferences", () => {
+    renderWorkspace();
+
+    expect(screen.getByText("Email")).toBeTruthy();
+    expect(screen.getByText("giabnguyen1@gmail.com")).toBeTruthy();
+    expect(screen.getByText("Phone number")).toBeTruthy();
+    expect(screen.getByText("555-0199")).toBeTruthy();
+    expect(screen.getByText("Toronto, ON")).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Job preferences" })).toBeTruthy();
+    expect(screen.getByText("Open to relocation")).toBeTruthy();
+    expect(screen.getByText("Yes")).toBeTruthy();
+    expect(screen.getByText("Remote work")).toBeTruthy();
   });
 
   it("highlights the selected applicant", () => {

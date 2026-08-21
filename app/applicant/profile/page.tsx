@@ -3,26 +3,117 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { ProfileCard } from "@/components/profile/ProfileCard";
-import { LogoutButton } from "@/components/auth/LogoutButton";
+import { DeleteAccountButton } from "@/components/profile/DeleteAccountButton";
 import { Icon } from "@/components/ui/Icon";
-import { currentApplicant } from "@/lib/mock-data";
 
 export default function ApplicantProfilePage() {
   const { data: session, update } = useSession();
-  const fullName = session?.user?.fullName ?? currentApplicant.name;
-  const email = session?.user?.email ?? currentApplicant.email;
+  const fullName = session?.user?.fullName ?? "Applicant";
+  const email = session?.user?.email ?? "";
   const linkedCode = session?.user?.referenceCode ?? "";
   const [recruiterId, setRecruiterId] = useState("");
   const [saving, setSaving] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [profileNotice, setProfileNotice] = useState("");
+  const [profileError, setProfileError] = useState("");
   const invalid = recruiterId.trim() !== "" && !/^REC-[A-Z0-9]{6}$/i.test(recruiterId.trim());
-  const [relocation, setRelocation] = useState(currentApplicant.openToRelocation);
-  const [remote, setRemote] = useState(currentApplicant.remotePreferred);
+  const [phone, setPhone] = useState("");
+  const [location, setLocation] = useState("");
+  const [preferredName, setPreferredName] = useState("");
+  const [relocation, setRelocation] = useState(false);
+  const [remote, setRemote] = useState(false);
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   useEffect(() => {
     if (linkedCode) setRecruiterId(linkedCode);
   }, [linkedCode]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadProfile() {
+      try {
+        const response = await fetch("/api/account/profile");
+        if (!response.ok) {
+          if (!cancelled) setProfileLoaded(true);
+          return;
+        }
+        const result = (await response.json()) as {
+          profile?: {
+            preferredName?: string;
+            phone?: string;
+            location?: string;
+            openToRelocation?: boolean;
+            remotePreferred?: boolean;
+          };
+        };
+        if (cancelled) return;
+        if (result.profile) {
+          setPreferredName(result.profile.preferredName ?? "");
+          setPhone(result.profile.phone ?? "");
+          setLocation(result.profile.location ?? "");
+          setRelocation(Boolean(result.profile.openToRelocation));
+          setRemote(Boolean(result.profile.remotePreferred));
+        }
+        setProfileLoaded(true);
+      } catch {
+        if (!cancelled) {
+          setProfileLoaded(true);
+          setProfileError("Could not load your profile details.");
+        }
+      }
+    }
+    void loadProfile();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function saveProfile(next?: {
+    preferredName?: string;
+    phone?: string;
+    location?: string;
+    openToRelocation?: boolean;
+    remotePreferred?: boolean;
+  }) {
+    setProfileError("");
+    setProfileNotice("");
+    setSavingProfile(true);
+    const payload = {
+      preferredName: next?.preferredName ?? preferredName,
+      phone: next?.phone ?? phone,
+      location: next?.location ?? location,
+      openToRelocation: next?.openToRelocation ?? relocation,
+      remotePreferred: next?.remotePreferred ?? remote,
+    };
+    try {
+      const response = await fetch("/api/account/profile", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const result = (await response.json()) as {
+        error?: string;
+        profile?: {
+          preferredName?: string;
+          phone?: string;
+          location?: string;
+          openToRelocation?: boolean;
+          remotePreferred?: boolean;
+        };
+      };
+      if (!response.ok) {
+        setProfileError(result.error ?? "Could not save your profile.");
+        return;
+      }
+      setProfileNotice("Profile saved.");
+    } catch {
+      setProfileError("Could not save your profile. Try again.");
+    } finally {
+      setSavingProfile(false);
+    }
+  }
 
   async function connectRecruiter() {
     setError("");
@@ -61,13 +152,29 @@ export default function ApplicantProfilePage() {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+    <div>
+      <header className="sticky top-16 z-30 bg-canvas/95 backdrop-blur -mx-4 md:-mx-8 px-4 md:px-8 py-4">
+        <div className="card-surface p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-semibold">Profile</h1>
+            <p className="text-sm text-muted mt-1">
+              Manage your personal information and job preferences.
+            </p>
+          </div>
+          <button
+            className="btn btn-primary self-start sm:self-auto"
+            disabled={savingProfile || !profileLoaded}
+            type="button"
+            onClick={() => void saveProfile()}
+          >
+            {savingProfile ? <span className="loading loading-spinner loading-sm" /> : "Save changes"}
+          </button>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 mt-6">
       <div className="md:col-span-4 space-y-6">
-        <ProfileCard
-          action={<button className="btn btn-primary w-full">Edit profile</button>}
-          name={fullName}
-          subtitle={currentApplicant.title}
-        />
+        <ProfileCard name={fullName} />
         <section className="card-surface p-6 bg-base-200">
           <h2 className="font-semibold flex items-center gap-2 mb-4">
             <Icon className="text-primary" filled name="handshake" />
@@ -88,10 +195,12 @@ export default function ApplicantProfilePage() {
           <div className="absolute top-0 left-0 w-1 h-full bg-error" />
           <h2 className="font-semibold flex items-center gap-2 mb-2">
             <Icon className="text-error" name="link" />
-            Link recruiter
+            {linkedCode ? "Change recruiter" : "Link recruiter"}
           </h2>
           <p className="text-sm text-muted mb-4">
-            Enter your recruiter&apos;s unique ID to connect your profile.
+            {linkedCode
+              ? "Enter a new recruiter ID to switch who can see this profile."
+              : "Enter your recruiter's unique ID to connect your profile."}
           </p>
           {error ? (
             <div className="alert alert-error alert-soft mb-4">
@@ -127,31 +236,68 @@ export default function ApplicantProfilePage() {
             type="button"
             onClick={connectRecruiter}
           >
-            {saving ? <span className="loading loading-spinner loading-sm" /> : linkedCode ? "Update connection" : "Connect"}
+            {saving ? <span className="loading loading-spinner loading-sm" /> : linkedCode ? "Change recruiter" : "Connect"}
           </button>
         </section>
       </div>
       <div className="md:col-span-8 space-y-6">
         <section className="card-surface p-6">
           <h2 className="font-semibold border-b border-outline-variant pb-3 mb-4">Personal information</h2>
-          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {profileError ? (
+            <div className="alert alert-error alert-soft mb-4">
+              <Icon name="error" size={18} />
+              <span>{profileError}</span>
+            </div>
+          ) : null}
+          {profileNotice ? (
+            <div className="alert alert-success alert-soft mb-4">
+              <Icon name="check_circle" size={18} />
+              <span>{profileNotice}</span>
+            </div>
+          ) : null}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <dt className="text-xs font-semibold text-muted mb-1">Full name</dt>
-              <dd>{fullName}</dd>
+              <p className="text-xs font-semibold text-muted mb-1">Full name</p>
+              <p>{fullName}</p>
             </div>
             <div>
-              <dt className="text-xs font-semibold text-muted mb-1">Email address</dt>
-              <dd>{email}</dd>
+              <label className="label" htmlFor="profile-preferred-name">
+                <span className="label-text">Preferred name</span>
+              </label>
+              <input
+                className="input w-full"
+                id="profile-preferred-name"
+                value={preferredName}
+                onChange={(event) => setPreferredName(event.target.value)}
+              />
             </div>
             <div>
-              <dt className="text-xs font-semibold text-muted mb-1">Phone number</dt>
-              <dd>{currentApplicant.phone}</dd>
+              <p className="text-xs font-semibold text-muted mb-1">Email address</p>
+              <p>{email}</p>
             </div>
             <div>
-              <dt className="text-xs font-semibold text-muted mb-1">Location</dt>
-              <dd>{currentApplicant.location}</dd>
+              <label className="label" htmlFor="profile-phone">
+                <span className="label-text">Phone number</span>
+              </label>
+              <input
+                className="input w-full"
+                id="profile-phone"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+              />
             </div>
-          </dl>
+            <div>
+              <label className="label" htmlFor="profile-location">
+                <span className="label-text">Location</span>
+              </label>
+              <input
+                className="input w-full"
+                id="profile-location"
+                value={location}
+                onChange={(event) => setLocation(event.target.value)}
+              />
+            </div>
+          </div>
         </section>
         <section className="card-surface p-6">
           <h2 className="font-semibold border-b border-outline-variant pb-3 mb-4">Job preferences</h2>
@@ -164,6 +310,7 @@ export default function ApplicantProfilePage() {
               <input
                 checked={relocation}
                 className="toggle toggle-primary"
+                disabled={!profileLoaded}
                 type="checkbox"
                 onChange={(event) => setRelocation(event.target.checked)}
               />
@@ -176,6 +323,7 @@ export default function ApplicantProfilePage() {
               <input
                 checked={remote}
                 className="toggle toggle-primary"
+                disabled={!profileLoaded}
                 type="checkbox"
                 onChange={(event) => setRemote(event.target.checked)}
               />
@@ -197,15 +345,10 @@ export default function ApplicantProfilePage() {
               </span>
               <Icon className="text-muted" name="chevron_right" />
             </button>
-            <LogoutButton className="w-full flex items-center gap-3 p-4 rounded-lg border border-error/30 bg-error/10 text-error">
-              <Icon name="logout" />
-              <span>
-                <span className="block font-medium">Log out</span>
-                <span className="text-sm opacity-80">Securely sign out of your Job Tracker Hub account.</span>
-              </span>
-            </LogoutButton>
-          </div>
+              <DeleteAccountButton role="applicant" />
+            </div>
         </section>
+      </div>
       </div>
     </div>
   );

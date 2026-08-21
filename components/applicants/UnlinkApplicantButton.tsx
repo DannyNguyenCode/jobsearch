@@ -24,7 +24,7 @@ export function UnlinkApplicantButton({ applicantId, applicantName }: UnlinkAppl
       const response = await fetch(`/api/applicants/${applicantId}/link`, { method: "DELETE" });
       const result = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(result.error ?? "Could not end this relationship.");
+        setError(result.error ?? "Could not remove this applicant.");
         setOpen(false);
         return;
       }
@@ -32,7 +32,7 @@ export function UnlinkApplicantButton({ applicantId, applicantName }: UnlinkAppl
       router.push("/recruiter/applicants");
       router.refresh();
     } catch {
-      setError("Could not end this relationship. Try again.");
+      setError("Could not remove this applicant. Try again.");
       setOpen(false);
     } finally {
       setSaving(false);
@@ -43,14 +43,14 @@ export function UnlinkApplicantButton({ applicantId, applicantName }: UnlinkAppl
     <div className="flex flex-col items-stretch sm:items-end gap-2">
       <button className="btn btn-outline btn-error" disabled={saving} type="button" onClick={() => setOpen(true)}>
         <Icon name="link" size={18} />
-        End relationship
+        Remove Applicant
       </button>
       {error ? <p className="text-error text-xs">{error}</p> : null}
       <ConfirmArchiveModal
-        confirmLabel="Remove connection"
-        description={`${applicantName} will no longer be linked to your recruiter code. They will get an email that this relationship has ended.`}
+        confirmLabel="Remove Applicant"
+        description={`${applicantName} will no longer be linked to your recruiter code. They will get an email that they have been removed.`}
         open={open}
-        title="End this relationship?"
+        title="Remove this applicant?"
         onClose={() => setOpen(false)}
         onConfirm={() => void confirmUnlink()}
       />

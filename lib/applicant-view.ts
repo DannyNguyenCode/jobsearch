@@ -7,14 +7,20 @@ export function initialsFromName(name: string) {
   return letters.join("").toUpperCase() || "?";
 }
 
+type ApplicantProfileFields = Pick<Applicant, "title" | "location" | "phone" | "openToRelocation" | "remotePreferred">;
+
 export function toApplicantView(
   user: {
     _id: unknown;
     fullName: string;
     email: string;
     dateSignedUp?: Date;
+    phone?: string | null;
+    location?: string | null;
+    openToRelocation?: boolean | null;
+    remotePreferred?: boolean | null;
   },
-  extras?: Partial<Pick<Applicant, "title" | "location" | "phone">>,
+  extras?: Partial<ApplicantProfileFields>,
 ): Applicant {
   const joined =
     user.dateSignedUp instanceof Date ? formatDisplayDate(user.dateSignedUp) : "";
@@ -22,8 +28,8 @@ export function toApplicantView(
     id: String(user._id),
     name: user.fullName,
     email: user.email,
-    phone: extras?.phone ?? "",
-    location: extras?.location ?? "",
+    phone: extras?.phone ?? user.phone ?? "",
+    location: extras?.location ?? user.location ?? "",
     title: extras?.title ?? "Applicant",
     experienceYears: 0,
     salaryExpectation: "",
@@ -31,7 +37,7 @@ export function toApplicantView(
     recruiterId: "",
     initials: initialsFromName(user.fullName),
     joined,
-    openToRelocation: false,
-    remotePreferred: false,
+    openToRelocation: extras?.openToRelocation ?? Boolean(user.openToRelocation),
+    remotePreferred: extras?.remotePreferred ?? Boolean(user.remotePreferred),
   };
 }

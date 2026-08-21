@@ -2,7 +2,6 @@ import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { loginSchema } from "@/lib/validators/auth";
 import { isRememberDevice, REMEMBER_MAX_AGE, sessionMaxAgeSeconds } from "@/lib/session-duration";
-import type { UserRole } from "@/lib/types";
 
 class InvalidCredentialsError extends CredentialsSignin {
   code = "invalid_credentials";
@@ -10,10 +9,6 @@ class InvalidCredentialsError extends CredentialsSignin {
 
 class UnverifiedEmailError extends CredentialsSignin {
   code = "email_unverified";
-}
-
-function dashboardForRole(role: UserRole) {
-  return role === "recruiter" ? "/recruiter/dashboard" : "/applicant/dashboard";
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -80,39 +75,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.referenceCode = String(token.referenceCode ?? "");
       session.user.name = session.user.fullName;
       return session;
-    },
-    authorized({ request, auth: session }) {
-      const { pathname } = request.nextUrl;
-      const role = session?.user?.role;
-      const isApplicantPath = pathname.startsWith("/applicant");
-      const isRecruiterPath = pathname.startsWith("/recruiter");
-      const isAuthPage =
-        pathname === "/login" ||
-        pathname === "/register" ||
-        pathname === "/verify-email" ||
-        pathname === "/forgot-password";
-
-      if (isApplicantPath) {
-        if (role === "applicant") return true;
-        if (role === "recruiter") {
-          return Response.redirect(new URL("/recruiter/dashboard", request.url));
-        }
-        return false;
-      }
-
-      if (isRecruiterPath) {
-        if (role === "recruiter") return true;
-        if (role === "applicant") {
-          return Response.redirect(new URL("/applicant/dashboard", request.url));
-        }
-        return false;
-      }
-
-      if (isAuthPage && role) {
-        return Response.redirect(new URL(dashboardForRole(role), request.url));
-      }
-
-      return true;
     },
   },
 });
