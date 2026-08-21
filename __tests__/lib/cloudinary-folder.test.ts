@@ -20,11 +20,13 @@ describe("cloudinary folders", () => {
     );
   });
 
-  it("uses stable public ids for resume and job description", () => {
+  it("uses stable public ids for resume, cover letter, and job description", () => {
     expect(cloudinaryPublicIdForKind("resume")).toBe("resume");
+    expect(cloudinaryPublicIdForKind("coverLetter")).toBe("cover-letter");
     expect(cloudinaryPublicIdForKind("jobPosting")).toBe("job-description");
     expect(isDocumentUploadKind("resume")).toBe(true);
-    expect(isDocumentUploadKind("coverLetter")).toBe(false);
+    expect(isDocumentUploadKind("coverLetter")).toBe(true);
+    expect(isDocumentUploadKind("other")).toBe(false);
   });
 });
 

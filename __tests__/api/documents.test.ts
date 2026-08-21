@@ -107,6 +107,47 @@ describe("POST /api/applications/[id]/documents", () => {
     expect(body.application).toMatchObject({ documents: [expect.objectContaining({ kind: "resume" })] });
   });
 
+  it("uploads a cover letter with the cover-letter public id", async () => {
+    const record = {
+      position: "Customer Service",
+      dateApplied: new Date(2026, 7, 18),
+      documents: [],
+    };
+    vi.mocked(loadApplicationForApplicant).mockResolvedValue({
+      applicant: { name: "Alex Johnson" },
+      record,
+    } as never);
+    vi.mocked(uploadApplicationAsset).mockResolvedValue({
+      secure_url: "https://res.cloudinary.com/demo/cover-letter.pdf",
+      public_id: "jobtrackerhub/alex-johnson/customerservice-18-08-2026/cover-letter",
+      resource_type: "raw",
+      bytes: 900,
+    });
+    vi.mocked(attachApplicationFile).mockResolvedValue({
+      documents: [{ kind: "coverLetter", name: "cover-letter.pdf" }],
+    } as never);
+
+    const { status } = await readResponse(
+      await POST(
+        fileRequest("coverLetter", new File(["letter"], "cover-letter.pdf", { type: "application/pdf" })),
+        { params },
+      ),
+    );
+
+    expect(status).toBe(201);
+    expect(uploadApplicationAsset).toHaveBeenCalledWith(
+      expect.objectContaining({
+        folder: "jobtrackerhub/alex-johnson/customerservice-18-08-2026",
+        publicId: "cover-letter",
+        filename: "cover-letter.pdf",
+      }),
+    );
+    expect(attachApplicationFile).toHaveBeenCalledWith(
+      record,
+      expect.objectContaining({ kind: "coverLetter", name: "cover-letter.pdf" }),
+    );
+  });
+
   it("uploads a job description with the job-description public id", async () => {
     const record = {
       position: "Frontend Engineer",

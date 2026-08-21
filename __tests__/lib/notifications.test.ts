@@ -20,6 +20,7 @@ describe("notification copy", () => {
     expect(commentAddedLine()).toBe("Comment added");
     expect(documentUploadedLine("jobPosting")).toBe("Job description uploaded");
     expect(documentUploadedLine("resume")).toBe("Resume uploaded");
+    expect(documentUploadedLine("coverLetter")).toBe("Cover letter uploaded");
     expect(relationshipEndedLine()).toBe("Ended the coaching relationship");
     expect(accountDeletedLine()).toBe("Deleted their account");
   });

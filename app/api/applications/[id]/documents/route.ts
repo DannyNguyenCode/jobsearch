@@ -22,7 +22,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const kind = String(form.get("kind") ?? "");
   const file = form.get("file");
   if (!isDocumentUploadKind(kind)) {
-    return jsonError("Choose a resume or job description.");
+    return jsonError("Choose a resume, cover letter, or job description.");
   }
   if (!(file instanceof File) || file.size === 0) {
     return jsonError(`Choose a ${DOCUMENT_KIND_LABELS[kind].toLowerCase()} file.`);

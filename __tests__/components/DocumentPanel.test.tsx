@@ -49,6 +49,37 @@ describe("DocumentPanel", () => {
     expect(await screen.findByRole("link", { name: "Download resume.pdf" })).toBeTruthy();
   });
 
+  it("uploads a cover letter for a saved application", async () => {
+    const user = userEvent.setup();
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        application: {
+          documents: [
+            {
+              id: "2",
+              kind: "coverLetter",
+              name: "cover-letter.pdf",
+              sizeLabel: "900 B",
+              uploadedAt: "Aug 18, 2026",
+              url: "https://example.com/cover-letter.pdf",
+            },
+          ],
+        },
+      }),
+    } as Response);
+
+    render(<DocumentPanel applicationId="cccccccccccccccccccccccc" documents={[]} />);
+    await user.upload(
+      screen.getByLabelText("Upload Cover letter"),
+      new File(["letter"], "cover-letter.pdf", { type: "application/pdf" }),
+    );
+
+    const body = vi.mocked(fetch).mock.calls[0]?.[1]?.body;
+    expect((body as FormData).get("kind")).toBe("coverLetter");
+    expect(await screen.findByRole("link", { name: "Download cover-letter.pdf" })).toBeTruthy();
+  });
+
   it("lets the recruiter download files without showing upload controls", () => {
     render(
       <DocumentPanel
