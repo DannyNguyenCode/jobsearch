@@ -6,6 +6,7 @@ import { Icon } from "@/components/ui/Icon";
 import {
   DOCUMENT_KIND_LABELS,
   DOCUMENT_UPLOAD_KINDS,
+  isDocumentUploadKind,
   type DocumentUploadKind,
 } from "@/lib/document-kind";
 import { deleteApplicationDocument, postApplicationDocument } from "@/lib/document-upload";
@@ -14,6 +15,7 @@ import type { ApplicationDocument } from "@/lib/types";
 
 const KIND_ICON: Record<DocumentUploadKind, string> = {
   resume: "description",
+  coverLetter: "mail",
   jobPosting: "bookmark_added",
 };
 
@@ -70,14 +72,14 @@ export function DocumentPanel({
 
   async function handleRemove(document: ApplicationDocument) {
     if (!applicationId) {
-      if (document.kind === "resume" || document.kind === "jobPosting") {
+      if (isDocumentUploadKind(document.kind)) {
         onPendingChange?.(document.kind, null);
       }
       setItems((current) => current.filter((item) => item.id !== document.id));
       return;
     }
     setError("");
-    setBusyKind(document.kind === "jobPosting" ? "jobPosting" : "resume");
+    if (isDocumentUploadKind(document.kind)) setBusyKind(document.kind);
     try {
       const application = await deleteApplicationDocument(applicationId, document.id);
       if (application?.documents) setItems(application.documents);
@@ -105,7 +107,7 @@ export function DocumentPanel({
         {title}
       </h2>
       <p className="text-sm text-muted mb-4">
-        Upload a resume and the job description. Files are stored under the jobtrackerhub folder.
+        Upload a resume, cover letter, and the job description. Files are stored under the jobtrackerhub folder.
       </p>
       <div className="space-y-3">
         {DOCUMENT_UPLOAD_KINDS.map((kind) => {
@@ -239,7 +241,7 @@ function DocumentList({
             <div className="flex items-start gap-2 min-w-0">
               <Icon
                 className="text-secondary mt-0.5"
-                name={document.kind === "resume" ? "description" : "bookmark_added"}
+                name={isDocumentUploadKind(document.kind) ? KIND_ICON[document.kind] : "description"}
               />
               <div className="min-w-0">
                 <p className="text-sm font-medium truncate">{document.name}</p>
